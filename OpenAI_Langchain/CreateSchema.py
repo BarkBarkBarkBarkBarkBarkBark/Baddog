@@ -1,15 +1,15 @@
-# initialize.py
-
+import weaviate
 import csv
 from collections import defaultdict
+from weaviate.classes.config import Property, DataType
 
 # Define a mapping from Python data types to Weaviate data types
 type_mapping = {
-    'str': 'DataType.TEXT',
-    'int': 'DataType.INT',
-    'float': 'DataType.NUMBER',
-    'bool': 'DataType.BOOLEAN',
-    'date': 'DataType.DATE',  # You can enhance date detection if needed
+    'str': DataType.TEXT,
+    'int': DataType.INT,
+    'float': DataType.NUMBER,
+    'bool': DataType.BOOLEAN,
+    'date': DataType.DATE,  # You can enhance date detection if needed
 }
 
 def infer_data_type(values):
@@ -48,7 +48,7 @@ def infer_data_type(values):
     else:
         return 'str'
 
-def generate_schema(csv_filename, schema_filename):
+def generate_schema(csv_filename):
     with open(csv_filename, 'r', encoding='utf-8-sig') as csvfile:
         reader = csv.reader(csvfile)
         headers = next(reader)
@@ -62,27 +62,27 @@ def generate_schema(csv_filename, schema_filename):
         for header in headers:
             values = columns[header]
             data_type = infer_data_type(values)
-            weaviate_data_type = type_mapping.get(data_type, 'DataType.TEXT')
-            properties.append({
-                'name': header,
-                'data_type': weaviate_data_type,
-                'vectorize_property_name': True,
-                'skip_vectorization': True,
-            })
-    # Generate the schema.py file
-    with open(schema_filename, 'w') as file:
-        for prop in properties:
-            # Include the arbitrary attributes
-            line = (
-                f'Property(name="{prop["name"]}", data_type={prop["data_type"]}, '
-                f'vectorize_property_name={prop["vectorize_property_name"]}, '
-                f'skip_vectorization={prop["skip_vectorization"]})\n'
-            )
-            file.write(line)
-    print(f"File '{schema_filename}' has been created with the inferred properties.")
+            weaviate_data_type = type_mapping.get(data_type, DataType.TEXT)
+            properties.append(Property(name=header, data_type=weaviate_data_type))
+    return properties
+
+def create_collection(client, collection_name, properties):
+    client.collections.create(
+        collection_name,
+        properties=properties
+    )
+    print(f"Collection '{collection_name}' created successfully!")
 
 if __name__ == "__main__":
-    # Request the CSV file path and output schema file name from the user
+    # Request the CSV file path from the user
     csv_filename = input("Enter the full path of the CSV file: ").strip()
-    schema_filename = input("Enter the output schema file name (e.g., schema.py): ").strip()
-    generate_schema(csv_filename, schema_filename)
+    collection_name = input("Enter the collection name: ").strip()
+
+    # Connect to Weaviate
+    client = weaviate.connect_to_local()
+
+    # Generate schema and create collection
+    properties = generate_schema(csv_filename)
+    create_collection(client, collection_name, properties)
+
+    client.close()
