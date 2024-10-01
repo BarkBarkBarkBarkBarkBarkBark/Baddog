@@ -1,0 +1,5 @@
+weaviate-client
+pandas
+langchain
+openai
+python-dotenv
