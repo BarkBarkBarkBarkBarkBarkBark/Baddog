@@ -1,9 +1,0 @@
-python -m pip install -U aider-chat
-
-# Change directory into a git repo
-cd /Users/marco/PycharmProjects/Test
-
-# Work with GPT-4o on your repo
-export OPENAI_API_KEY="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"
-aider
-
