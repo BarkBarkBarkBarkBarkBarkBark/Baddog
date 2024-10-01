@@ -3,3 +3,8 @@ pandas
 langchain
 openai
 python-dotenv
+weaviate-client
+pandas
+langchain
+openai
+python-dotenv
